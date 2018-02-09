@@ -5,13 +5,14 @@ from urllib.parse import urljoin
 
 
 roots = ['https://www.douban.com',
-         'https://www.bing.com']
+         'https://www.bing.com',
+         'https://onedrive.live.com/?gologin=1&WT.mc_id=O16_BingHP']
 
 # a set of visited url
 visited = set()
 
 # a set of url that need to be read
-urls_to_read = queue.Queue
+urls_to_read = queue.Queue()
 
 
 def handle_page(page, page_url):
@@ -25,7 +26,8 @@ def handle_page(page, page_url):
             url = urljoin(page_url, url)
             url = url.split('#')[0]
             if url[0:4] == 'http':
-                urls_to_read.put(url)
+                if url not in visited:
+                    urls_to_read.put(url)
 
 
 def main():
@@ -36,9 +38,18 @@ def main():
     while not urls_to_read.empty():
         url = urls_to_read.get()
         if url not in visited:
-            response = requests.get(url)
-            response.encoding = 'utf-8'
-            handle_page(requests.text, url)
+            # to show
+            print(url)
+
+            try:
+                response = requests.get(url)
+            except requests.exceptions.ConnectionError:
+                print("can't open url {}".format(url))
+                continue
+            else:
+                response.encoding = 'utf-8'
+                handle_page(response.text, url)
+                visited.add(url)
 
 
 if __name__ == '__main__':
